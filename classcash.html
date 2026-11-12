@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ClassCash</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--p:#5b3df5;--c:#14b8c4;--bg:#f3f0fb;--t:#1c1a33;--m:#6c6a85;--g:rgba(255,255,255,.62);--gb:rgba(255,255,255,.85)}
+@media(prefers-color-scheme:dark){:root{--bg:#0f0d1f;--t:#f1efff;--m:#a6a3c0;--g:rgba(40,36,78,.55);--gb:rgba(255,255,255,.14)}}
+*{box-sizing:border-box;margin:0}
+body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--t);background:var(--bg);min-height:100vh;padding-bottom:96px;background-image:radial-gradient(520px 420px at 0 0,rgba(124,92,255,.32),transparent),radial-gradient(520px 420px at 100% 25%,rgba(20,184,196,.26),transparent),radial-gradient(420px 420px at 25% 100%,rgba(255,150,200,.22),transparent);background-attachment:fixed}
+.glass{background:var(--g);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--gb);border-radius:22px;box-shadow:0 8px 28px rgba(60,40,140,.12),inset 0 1px 0 rgba(255,255,255,.45)}
+.wrap{max-width:720px;margin:auto;padding:16px}
+.top{margin-bottom:14px}.top small{display:block;color:var(--m)}
+.brand{font-size:20px;font-weight:800}.brand.big{font-size:28px}
+.card{padding:16px;margin-bottom:12px}
+.hero{background:linear-gradient(135deg,rgba(91,61,245,.88),rgba(20,184,196,.78));color:#fff;border:0}
+.hero small{opacity:.85}.big{font-size:30px;font-weight:800;display:block;margin-top:2px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid .card{margin:0}
+.stat small,.mut{color:var(--m);font-size:13px}.stat b{display:block;font-size:19px;margin-top:4px}
+.btn{border:1px solid var(--gb);background:var(--g);color:var(--t);padding:10px 14px;border-radius:14px;font:600 14px inherit;cursor:pointer;transition:transform .12s}
+.btn:active{transform:scale(.96)}.btn.p{background:linear-gradient(135deg,var(--p),#8b6cff);color:#fff;border:0}.btn.s{padding:6px 10px;font-size:12px}
+input,select{width:100%;padding:12px;border-radius:14px;border:1px solid var(--gb);background:var(--g);color:var(--t);font:inherit;margin-bottom:8px}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between}.row>input,.row>select,.row>.btn{flex:1}.row>.btn.s{flex:0}
+.item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--gb)}.item:last-child{border:0}
+.chip{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:700;white-space:nowrap}
+.ok{background:#d1fae5;color:#047857}.wr{background:#fef3c7;color:#b45309}.er{background:#fee2e2;color:#b91c1c}
+.bar{height:8px;border-radius:9px;background:var(--gb);overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--c),var(--p));transition:width .6s}
+nav{position:fixed;bottom:calc(10px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);display:flex;justify-content:space-around;padding:6px;width:min(94vw,560px)}
+nav button{background:none;border:0;color:var(--m);display:flex;flex-direction:column;align-items:center;gap:3px;font:600 10px inherit;padding:6px 8px;border-radius:14px;cursor:pointer}
+nav button.on{color:#fff;background:linear-gradient(135deg,var(--p),var(--c))}
+svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.center{min-height:100vh;display:grid;place-items:center;padding:16px}.login{width:min(92vw,380px);display:grid;gap:10px;padding:24px;text-align:center}
+.login input,.login p{margin:0}.login a{color:var(--p);font-size:13px;cursor:pointer}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);padding:10px 16px;z-index:9;font-size:14px}
+details{margin-bottom:8px}summary{cursor:pointer;color:var(--m);font-size:13px;padding:4px 0}label.ck{display:flex;gap:8px;padding:4px 0;font-size:14px}label.ck input{width:auto;margin:0}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--p);outline-offset:2px}
+</style></head>
+<body><div id="app"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-auth-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-firestore-compat.min.js"></script>
+<script>
+firebase.initializeApp({apiKey:"AIzaSyDHVMX37Y843qesiunSbbk2kaw0uP6TGTg",authDomain:"classcash-web.firebaseapp.com",projectId:"classcash-web",storageBucket:"classcash-web.firebasestorage.app",messagingSenderId:"212206166910",appId:"1:212206166910:web:3d4e5f8c5b40c6fad9492f"});
+const A=firebase.auth(),D=firebase.firestore(),TS=firebase.firestore.FieldValue.serverTimestamp(),INC=firebase.firestore.FieldValue.increment;
+const app=document.getElementById('app'),$=s=>document.querySelector(s);
+const rp=n=>'Rp'+(n||0).toLocaleString('id-ID');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fd=t=>t&&t.toDate?t.toDate().toLocaleString('id-ID',{dateStyle:'short',timeStyle:'short'}):'';
+const P={home:'<path d="M3 11 12 3l9 8v10H3z"/>',users:'<circle cx="9" cy="8" r="4"/><path d="M2 21v-1a6 6 0 0 1 12 0v1M16 4a4 4 0 0 1 0 8M22 21v-1a6 6 0 0 0-4-5.6"/>',wallet:'<rect x="2" y="6" width="20" height="14" rx="3"/><path d="M2 10h20M16 15h2"/>',tag:'<path d="M20 12 12 20 4 12V4h8z"/><circle cx="8" cy="8" r="1"/>',out:'<path d="M7 17 17 7M8 7h9v9"/>',list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',lo:'<path d="M9 21H5V3h4M16 17l5-5-5-5M21 12H9"/>',plus:'<path d="M12 5v14M5 12h14"/>',back:'<path d="m15 18-6-6 6-6"/>'};
+const ic=n=>`<svg class="i" viewBox="0 0 24 24">${P[n]}</svg>`;
+function toast(m){const t=document.createElement('div');t.className='toast glass';t.textContent=m;document.body.append(t);setTimeout(()=>t.remove(),2600)}
+const chip=(p,a)=>p>=a?'<span class="chip ok">Lunas</span>':p>0?'<span class="chip wr">Cicilan</span>':'<span class="chip er">Belum bayar</span>';
+let U=null,busy=0,S={tab:'dash',cfg:{},st:[],du:[],sb:[],mb:[],tx:[]};
+const run=async f=>{if(busy)return;busy=1;try{await f()}catch(e){toast(e.code==='permission-denied'?'Ditolak oleh aturan keamanan':e.message)}finally{busy=0}};
+const aud=(b,action,x)=>b.set(D.collection('auditLogs').doc(),{by:U.email,action,...x,createdAt:TS});
+const bal=p=>S.tx.filter(t=>t.pos==p).reduce((s,t)=>s+(t.type=='IN'?t.amount:-t.amount),0);
+const sum=(p,y)=>S.tx.filter(t=>t.pos==p&&t.type==y).reduce((s,t)=>s+t.amount,0);
+const mem=id=>S.mb.filter(m=>m.billId==id);
+
+/* ---------- layar login & status ---------- */
+const scr=(t,m,b='')=>app.innerHTML=`<div class="center"><div class="glass card login"><b class="brand big">${t}</b><p class="mut">${m}</p>${b}<button class="btn" onclick="A.signOut()">Keluar</button></div></div>`;
+function login(m){app.innerHTML=`<div class="center"><div class="glass card login"><b class="brand big">ClassCash</b><p class="mut">Kelola uang kas kelas dengan rapi.</p><button class="btn p" id="g">Masuk dengan Google</button><p class="mut">atau dengan email</p><input id="e" type="email" placeholder="Email" autocomplete="email"><input id="p" type="password" placeholder="Password" autocomplete="current-password"><div class="row"><button class="btn" id="li">Masuk</button><button class="btn" id="rg">Daftar</button></div><a id="fp">Lupa password?</a><p class="mut" id="m">${esc(m||'')}</p></div></div>`;
+const e=()=>$('#e').value.trim(),p=()=>$('#p').value,f=x=>x.catch(r=>$('#m').textContent=r.message);
+$('#g').onclick=()=>f(A.signInWithPopup(new firebase.auth.GoogleAuthProvider()));
+$('#li').onclick=()=>f(A.signInWithEmailAndPassword(e(),p()));
+$('#rg').onclick=()=>f(A.createUserWithEmailAndPassword(e(),p()).then(c=>c.user.sendEmailVerification()));
+$('#fp').onclick=()=>f(A.sendPasswordResetEmail(e()).then(()=>$('#m').textContent='Link reset password dikirim ke email.'))}
+const verify=()=>scr('Verifikasi email','Buka link verifikasi yang dikirim ke '+esc(U.email)+', lalu tekan tombol di bawah.','<button class="btn p" onclick="U.reload().then(()=>U.getIdToken(true)).then(()=>location.reload())">Saya sudah verifikasi</button><button class="btn" onclick="U.sendEmailVerification().then(()=>toast(\'Email dikirim ulang\'))">Kirim ulang email</button>');
+
+/* ---------- muat data ---------- */
+const g=q=>q.get().then(s=>s.docs.map(d=>({id:d.id,...d.data()})));
+async function load(){[S.st,S.du,S.sb,S.mb,S.tx,S.cfg]=await Promise.all([g(D.collection('students')),g(D.collection('weeklyDues')),g(D.collection('specialBills')),g(D.collection('specialBillMembers')),g(D.collection('transactions')),D.doc('settings/main').get().then(d=>d.exists?d.data():{})]);S.st.sort((a,b)=>a.no-b.no);render()}
+async function loadStu(){const e=U.email.toLowerCase();[S.du,S.mb]=await Promise.all([g(D.collection('weeklyDues').where('studentEmail','==',e)),g(D.collection('specialBillMembers').where('studentEmail','==',e))]);renderStu()}
+A.onAuthStateChanged(async u=>{U=u;if(!u)return login();if(!u.emailVerified)return verify();
+try{const e=u.email.toLowerCase(),a=await D.doc('admins/'+e).get();
+if(a.exists&&a.data().aktif===true){S.admin=1;await load()}
+else{const q=await D.collection('students').where('email','==',e).get();if(q.empty)return scr('Akun belum terhubung','Minta bendahara menambahkan email '+esc(e)+' ke data siswa.');S.me=q.docs[0].data();await loadStu()}}
+catch(x){scr('Gagal memuat data',esc(x.message))}});
+
+/* ---------- admin ---------- */
+const TABS=[['dash','home','Beranda'],['sis','users','Siswa'],['kas','wallet','Kas'],['tag','tag','Tagihan'],['out','out','Keluar'],['log','list','Riwayat']];
+function render(){const V={dash,sis,kas,tag,out,log}[S.tab]();app.innerHTML=`<div class="wrap"><div class="row top"><div><b class="brand">ClassCash</b><small>${esc(S.cfg.className||'Kas kelas')} - Admin</small></div><button class="btn s" onclick="A.signOut()" aria-label="Keluar">${ic('lo')}</button></div>${V}</div><nav class="glass">${TABS.map(t=>`<button class="${S.tab==t[0]?'on':''}" onclick="S.tab='${t[0]}';S.bill=0;render()">${ic(t[1])}${t[2]}</button>`).join('')}</nav>`}
+function dash(){const w=S.cfg.week||0,d=S.du.filter(x=>x.week==w),tg=d.reduce((s,x)=>s+x.amount,0),tp=d.reduce((s,x)=>s+x.paid,0),bl=d.filter(x=>x.paid<x.amount).length,pc=tg?Math.round(tp/tg*100):0,old=S.du.filter(x=>x.week<w).reduce((s,x)=>s+x.amount-x.paid,0),sbIn=S.tx.filter(t=>t.pos.startsWith('SB:')&&t.type=='IN').reduce((s,t)=>s+t.amount,0),sbDue=S.mb.reduce((s,x)=>s+x.amount-x.paid,0);
+return`<div class="card glass hero"><small>Saldo kas utama</small><b class="big">${rp(bal('CASH_MAIN'))}</b></div>
+<div class="grid"><div class="card glass stat"><small>Pemasukan</small><b>${rp(sum('CASH_MAIN','IN'))}</b></div><div class="card glass stat"><small>Pengeluaran</small><b>${rp(sum('CASH_MAIN','OUT'))}</b></div></div>
+<div class="card glass" style="margin-top:12px"><div class="row"><b>Kas minggu ${w||'-'}</b><span class="mut">${pc}%</span></div><div class="bar"><i style="width:${pc}%"></i></div><p class="mut" style="margin-top:8px">Terkumpul ${rp(tp)} dari ${rp(tg)}. ${bl} siswa belum lunas. Tunggakan lama ${rp(old)}.</p></div>
+<div class="card glass"><b>Tagihan khusus</b> <span class="mut">(terpisah dari kas utama)</span><p class="mut" style="margin-top:6px">${S.sb.length} tagihan. Terkumpul ${rp(sbIn)}. Belum dibayar ${rp(sbDue)}.</p></div>`}
+function sis(){return`<div class="card glass"><b>Tambah siswa</b><input id="sn" placeholder="Nama lengkap"><div class="row"><select id="sg"><option value="L">Laki-laki</option><option value="P">Perempuan</option></select><input id="se" type="email" placeholder="Email akun (opsional)"></div><button class="btn p" style="width:100%" onclick="addSt()">Simpan siswa</button>${S.st.length?'':'<button class="btn" style="width:100%;margin-top:8px" onclick="seed()">Isi 21 siswa awal</button>'}</div>
+<div class="card glass">${S.st.map(s=>`<div class="item"><div><b>${s.no}. ${esc(s.name)}</b><br><small class="mut">${s.gender=='P'?'Perempuan':'Laki-laki'} - ${esc(s.email||'email belum diisi')}</small></div><div class="row"><button class="btn s" onclick="editEm('${s.id}')">Email</button><button class="btn s" onclick="delSt('${s.id}')">${ic('plus').replace('M12 5v14M5 12h14','M5 5l14 14M19 5 5 19')}</button></div></div>`).join('')||'<p class="mut">Belum ada siswa.</p>'}</div>`}
+const NAMES='Andi Pratama,Budi Santoso,Citra Amelia,Dinda Putri,Eko Saputra,Farhan Akbar,Gabriella Putri,Hendra Wijaya,Intan Permata,Jonathan Samuel,Kevin Alexander,Livia Natalia,Michael Christian,Nadine Aurelia,Oscar Fernando,Putri Maharani,Rafael Jonathan,Salsabila Putri,Timothy Andreas,Vanessa Clarissa,William Sebastian'.split(','),GEN='LLPPLLPLPLLPLPLPLPLPL';
+const seed=()=>run(async()=>{const b=D.batch();NAMES.forEach((n,i)=>b.set(D.collection('students').doc(),{name:n,no:i+1,gender:GEN[i],email:'',active:true,joined:TS}));await b.commit();await load()});
+const addSt=()=>run(async()=>{const n=$('#sn').value.trim();if(!n)return toast('Isi nama siswa');await D.collection('students').add({name:n,no:S.st.length?Math.max(...S.st.map(s=>s.no))+1:1,gender:$('#sg').value,email:$('#se').value.trim().toLowerCase(),active:true,joined:TS});await load()});
+const editEm=id=>run(async()=>{const e=prompt('Email akun siswa');if(e===null)return;await D.doc('students/'+id).update({email:e.trim().toLowerCase()});await load()});
+const delSt=id=>run(async()=>{if(!confirm('Hapus siswa ini? Riwayat pembayarannya tetap tersimpan.'))return;await D.doc('students/'+id).delete();await load()});
+const dueRow=x=>`<div class="item"><div><b>${esc(x.name)}</b><br><small class="mut">Minggu ${x.week}: ${rp(x.paid)} / ${rp(x.amount)}</small></div><div class="row">${chip(x.paid,x.amount)}${x.paid<x.amount?`<button class="btn s" onclick="payFull('d','${x.id}')">Lunas</button><button class="btn s" onclick="payPart('d','${x.id}')">Cicil</button>`:''}</div></div>`;
+function kas(){const w=S.cfg.week||0,a=S.cfg.weeklyAmount||5000,d=S.du.filter(x=>x.week==w).sort((x,y)=>x.no-y.no),o=S.du.filter(x=>x.week<w&&x.paid<x.amount).sort((x,y)=>x.week-y.week||x.no-y.no);
+return`<div class="card glass"><b>Kas mingguan</b><p class="mut" style="margin:4px 0 8px">Nominal baru hanya berlaku untuk minggu berikutnya. Isi email siswa sebelum memulai minggu baru.</p><div class="row"><input id="amt" type="number" value="${a}" style="margin:0"><button class="btn p" onclick="newWeek()">Mulai minggu ${w+1}</button></div></div>
+<div class="card glass"><b>Minggu ${w||'-'}</b>${d.map(dueRow).join('')||'<p class="mut">Belum ada tagihan. Tambah siswa lalu mulai minggu baru.</p>'}</div>
+${o.length?`<div class="card glass"><b>Tunggakan lama</b>${o.map(dueRow).join('')}</div>`:''}`}
+const newWeek=()=>run(async()=>{const a=+$('#amt').value,act=S.st.filter(s=>s.active!==false),w=(S.cfg.week||0)+1;if(!(a>0))return toast('Nominal tidak valid');if(!act.length)return toast('Tambah siswa dulu');if(!confirm('Buat tagihan minggu '+w+' sebesar '+rp(a)+' untuk '+act.length+' siswa?'))return;const b=D.batch();act.forEach(s=>b.set(D.doc('weeklyDues/'+w+'_'+s.id),{studentId:s.id,studentEmail:(s.email||'').toLowerCase(),name:s.name,no:s.no,week:w,amount:a,paid:0,createdAt:TS}));b.set(D.doc('paymentPeriods/'+w),{week:w,amount:a,createdAt:TS});b.set(D.doc('settings/main'),{...S.cfg,week:w,weeklyAmount:a},{merge:true});aud(b,'minggu_baru',{week:w});await b.commit();await load()});
+const find=(k,id)=>(k=='d'?S.du:S.mb).find(x=>x.id==id);
+const pay=(k,id,amt)=>run(async()=>{const x=find(k,id),r=x.amount-x.paid,d=k=='d';if(!(amt>0)||amt>r)return toast('Nominal harus 1 sampai '+rp(r));const b=D.batch(),t=D.collection('transactions').doc();
+b.update(D.doc((d?'weeklyDues/':'specialBillMembers/')+id),{paid:INC(amt)});
+b.set(D.collection(d?'weeklyPayments':'specialBillPayments').doc(),d?{dueId:id,studentId:x.studentId,studentEmail:x.studentEmail,week:x.week,amount:amt,createdAt:TS}:{billId:x.billId,memberId:id,studentEmail:x.studentEmail,amount:amt,createdAt:TS});
+b.set(t,{pos:d?'CASH_MAIN':'SB:'+x.billId,type:'IN',kind:d?'kas':'tagihan',amount:amt,name:d?x.name:x.studentName,studentEmail:x.studentEmail,note:d?'Kas minggu '+x.week:x.billName,by:U.email,createdAt:TS});
+aud(b,'bayar',{tx:t.id,amount:amt});await b.commit();toast('Pembayaran dicatat');await load()});
+const payFull=(k,id)=>{const x=find(k,id);pay(k,id,x.amount-x.paid)};
+const payPart=(k,id)=>{const v=+prompt('Nominal pembayaran (Rp)');if(v)pay(k,id,v)};
+const exp=(pos,col,n,a,extra)=>run(async()=>{if(!n||!(a>0))return toast('Isi nama dan nominal');if(a>bal(pos))return toast('Melebihi saldo '+rp(bal(pos)));const b=D.batch(),t=D.collection('transactions').doc();b.set(D.collection(col).doc(),{name:n,amount:a,by:U.email,...extra,createdAt:TS});b.set(t,{pos,type:'OUT',kind:'pengeluaran',amount:a,name:n,studentEmail:'',note:n,by:U.email,createdAt:TS});aud(b,'pengeluaran',{tx:t.id,amount:a});await b.commit();toast('Pengeluaran dicatat');await load()});
+function out(){return`<div class="card glass"><b>Pengeluaran kas utama</b><p class="mut" style="margin:4px 0 8px">Saldo tersedia ${rp(bal('CASH_MAIN'))}</p><input id="en" placeholder="Nama pengeluaran"><div class="row"><input id="ea" type="number" placeholder="Nominal"><input id="ec" placeholder="Kategori"></div><button class="btn p" style="width:100%" onclick="exp('CASH_MAIN','cashExpenses',$('#en').value.trim(),+$('#ea').value,{category:$('#ec').value})">Catat pengeluaran</button></div>
+<div class="card glass">${S.tx.filter(t=>t.pos=='CASH_MAIN'&&t.type=='OUT').sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).map(t=>`<div class="item"><div><b>${esc(t.name)}</b><br><small class="mut">${fd(t.createdAt)}</small></div><b>-${rp(t.amount)}</b></div>`).join('')||'<p class="mut">Belum ada pengeluaran.</p>'}</div>`}
+function tag(){if(S.bill)return billView();return`<div class="card glass"><div class="row"><b>Tagihan khusus</b><button class="btn p s" onclick="S.nb=!S.nb;render()" aria-label="Tagihan baru">${ic('plus')}</button></div>${S.nb?newForm():''}</div>`+S.sb.map(b=>{const c=sum('SB:'+b.id,'IN'),tg=b.amount*mem(b.id).length;return`<div class="card glass" onclick="S.bill='${b.id}';render()"><b>${esc(b.name)}</b><p class="mut">${rp(c)} dari ${rp(tg)}. Saldo ${rp(bal('SB:'+b.id))}</p><div class="bar"><i style="width:${tg?Math.min(100,c/tg*100):0}%"></i></div></div>`}).join('')}
+const newForm=()=>`<div style="margin-top:10px"><input id="bn" placeholder="Nama tagihan"><input id="br" placeholder="Alasan tagihan"><div class="row"><input id="ba" type="number" placeholder="Nominal per siswa"><input id="bd" type="date"></div><select id="bt"><option value="A">Semua siswa</option><option value="L">Siswa laki-laki</option><option value="P">Siswa perempuan</option><option value="M">Pilih manual (centang)</option></select><details><summary>Daftar siswa untuk pilihan manual</summary>${S.st.map(s=>`<label class="ck"><input type="checkbox" class="mc" value="${s.id}">${esc(s.name)}</label>`).join('')}</details><button class="btn p" style="width:100%" onclick="mkBill()">Buat tagihan</button></div>`;
+const mkBill=()=>run(async()=>{const n=$('#bn').value.trim(),a=+$('#ba').value,t=$('#bt').value,due=$('#bd').value;let l=S.st.filter(s=>s.active!==false);if(!n||!(a>0))return toast('Isi nama dan nominal');if(t=='L'||t=='P')l=l.filter(s=>s.gender==t);if(t=='M'){const ck=[...document.querySelectorAll('.mc:checked')].map(x=>x.value);l=l.filter(s=>ck.includes(s.id))}if(!l.length)return toast('Tidak ada siswa terpilih');const r=D.collection('specialBills').doc(),b=D.batch(),rs=$('#br').value;b.set(r,{name:n,reason:rs,amount:a,target:t,due,status:'Aktif',createdAt:TS});l.forEach(s=>b.set(D.collection('specialBillMembers').doc(),{billId:r.id,billName:n,reason:rs,dueDate:due,amount:a,paid:0,studentId:s.id,studentEmail:(s.email||'').toLowerCase(),studentName:s.name,createdAt:TS}));aud(b,'buat_tagihan',{billId:r.id});await b.commit();S.nb=0;await load()});
+function billView(){const b=S.sb.find(x=>x.id==S.bill),p='SB:'+b.id,m=mem(b.id),tg=m.reduce((s,x)=>s+x.amount,0);
+return`<button class="btn s" onclick="S.bill=0;render()" style="margin-bottom:10px">${ic('back')}</button><div class="card glass hero"><small>${esc(b.name)}</small><b class="big">${rp(bal(p))}</b><small>Saldo tagihan ini. Terkumpul ${rp(sum(p,'IN'))} dari ${rp(tg)}. Terpakai ${rp(sum(p,'OUT'))}.</small></div>
+<button class="btn" style="width:100%;margin-bottom:12px" onclick="exp('${p}','specialBillExpenses',prompt('Nama pengeluaran'),+prompt('Nominal (Rp)'),{billId:'${b.id}'})">Catat pengeluaran dari tagihan ini</button>
+<div class="card glass">${m.map(x=>`<div class="item"><div><b>${esc(x.studentName)}</b><br><small class="mut">${rp(x.paid)} / ${rp(x.amount)}</small></div><div class="row">${chip(x.paid,x.amount)}${x.paid<x.amount?`<button class="btn s" onclick="payFull('m','${x.id}')">Lunas</button><button class="btn s" onclick="payPart('m','${x.id}')">Cicil</button>`:''}</div></div>`).join('')}</div>`}
+function log(){const f=S.f||'all',l=S.tx.filter(t=>f=='all'||(f=='kas'?t.pos=='CASH_MAIN':t.pos.startsWith('SB:'))).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+return`<select onchange="S.f=this.value;render()"><option value="all"${f=='all'?' selected':''}>Semua transaksi</option><option value="kas"${f=='kas'?' selected':''}>Kas utama</option><option value="sb"${f=='sb'?' selected':''}>Tagihan khusus</option></select><div class="card glass">${l.map(t=>`<div class="item"><div><b>${esc(t.name)}</b><br><small class="mut">${esc(t.note)} - ${fd(t.createdAt)}</small></div><b style="color:${t.type=='IN'?'#10b981':'#d9534f'}">${t.type=='IN'?'+':'-'}${rp(t.amount)}</b></div>`).join('')||'<p class="mut">Belum ada transaksi.</p>'}</div>`}
+
+/* ---------- siswa ---------- */
+function renderStu(){const w=Math.max(0,...S.du.map(x=>x.week)),c=S.du.find(x=>x.week==w),old=S.du.filter(x=>x.week<w).reduce((s,x)=>s+x.amount-x.paid,0),h=[...S.du].sort((a,b)=>b.week-a.week);
+app.innerHTML=`<div class="wrap"><div class="row top"><div><b class="brand">Halo, ${esc(S.me.name.split(' ')[0])}</b><small>Uang kas kamu</small></div><button class="btn s" onclick="A.signOut()" aria-label="Keluar">${ic('lo')}</button></div>
+<div class="card glass hero"><small>Kas minggu ${w||'-'}</small>${c?`<b class="big">${c.paid>=c.amount?'Lunas':'Sisa '+rp(c.amount-c.paid)}</b><small>Dibayar ${rp(c.paid)} dari ${rp(c.amount)}. Tunggakan lama ${rp(old)}.</small>`:'<b class="big">Belum ada tagihan</b>'}</div>
+<div class="card glass"><b>Riwayat kas mingguan</b>${h.map(x=>`<div class="item"><div>Minggu ${x.week}<br><small class="mut">${rp(x.paid)} / ${rp(x.amount)}</small></div>${chip(x.paid,x.amount)}</div>`).join('')||'<p class="mut">Belum ada riwayat.</p>'}</div>
+<div class="card glass"><b>Tagihan khusus</b>${S.mb.map(x=>`<div class="item"><div><b>${esc(x.billName)}</b><br><small class="mut">${esc(x.reason)}${x.dueDate?' - batas '+esc(x.dueDate):''}<br>${rp(x.paid)} / ${rp(x.amount)}</small></div>${chip(x.paid,x.amount)}</div>`).join('')||'<p class="mut">Tidak ada tagihan khusus untukmu.</p>'}</div></div>`}
+</script></body></html>
